@@ -81,7 +81,7 @@ enum CaffeinateFlag: String, CaseIterable, Hashable {
 struct ManagedSession {
     let startedAt: Date
     let endsAt: Date?
-    let flags: [CaffeinateFlag]
+    var flags: [CaffeinateFlag]
     var assertionIDs: [CaffeinateFlag: IOPMAssertionID]
 }
 

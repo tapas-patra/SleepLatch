@@ -40,10 +40,13 @@ final class SleepLatchModel: ObservableObject {
             }
         }
 
-        refresh(forceExternalRefresh: true)
+        refresh(forceExternalRefresh: false)
+        refreshExternalProcesses(showProgress: true)
     }
 
     func setFlag(_ flag: CaffeinateFlag, enabled: Bool) {
+        let previousSelection = selectedFlags
+
         if enabled {
             selectedFlags.append(flag)
         } else {
@@ -51,8 +54,22 @@ final class SleepLatchModel: ObservableObject {
         }
 
         selectedFlags = CaffeinateFlag.normalize(selectedFlags)
-        CaffeinateFlag.persistSelection(selectedFlags)
+        let powerSource = PowerSourceMonitor.currentState()
+
+        if hasManagedSession {
+            do {
+                try sessionController.updateManagedSessionFlags(selectedFlags, powerSource: powerSource)
+                lastErrorMessage = nil
+            } catch {
+                selectedFlags = previousSelection
+                lastErrorMessage = error.localizedDescription
+            }
+        } else {
+            lastErrorMessage = nil
+        }
+
         refresh(forceExternalRefresh: false)
+        CaffeinateFlag.persistSelection(selectedFlags)
     }
 
     func isFlagEnabled(_ flag: CaffeinateFlag) -> Bool {
@@ -86,7 +103,8 @@ final class SleepLatchModel: ObservableObject {
             lastErrorMessage = "Failed to stop external PID \(pid)"
         }
 
-        refresh(forceExternalRefresh: true)
+        refresh(forceExternalRefresh: false)
+        refreshExternalProcesses(showProgress: true)
     }
 
     func stopAllExternalSessions() {
@@ -106,7 +124,8 @@ final class SleepLatchModel: ObservableObject {
                     self.lastErrorMessage = "Failed to stop PIDs: \(failedPIDs)"
                 }
 
-                self.refresh(forceExternalRefresh: true)
+                self.refresh(forceExternalRefresh: false)
+                self.refreshExternalProcesses(showProgress: true)
             }
         }
     }
@@ -137,17 +156,24 @@ final class SleepLatchModel: ObservableObject {
         onStatusChange?()
     }
 
+    func refreshExternalProcessesManually() {
+        refresh(forceExternalRefresh: false)
+        refreshExternalProcesses(showProgress: true)
+    }
+
     func cleanupOnTerminate() {
         externalRefreshToken = UUID()
         timer?.invalidate()
         sessionController.stopManagedSession()
     }
 
-    private func refreshExternalProcesses() {
+    private func refreshExternalProcesses(showProgress: Bool = false) {
         let refreshToken = UUID()
 
         externalRefreshToken = refreshToken
-        isRefreshingExternalProcesses = true
+        if showProgress {
+            isRefreshingExternalProcesses = true
+        }
 
         DispatchQueue.global(qos: .utility).async {
             let processes = CaffeinateInspector().runningProcesses()

@@ -91,7 +91,7 @@ struct ControlPanelView: View {
                     .font(.headline)
                 Spacer()
                 Button("Refresh") {
-                    model.refresh(forceExternalRefresh: true)
+                    model.refreshExternalProcessesManually()
                 }
             }
 

@@ -115,6 +115,21 @@ final class CaffeinateSessionController: @unchecked Sendable {
         try reconcileAssertions(now: now, powerSource: powerSource)
     }
 
+    func updateManagedSessionFlags(_ flags: [CaffeinateFlag], powerSource: PowerSourceState) throws {
+        guard var managedSession else {
+            return
+        }
+
+        let normalizedFlags = CaffeinateFlag.normalize(flags)
+        if normalizedFlags == [.system], !powerSource.isOnACPower {
+            throw ManagedSessionError.systemSleepRequiresACPower
+        }
+
+        managedSession.flags = normalizedFlags
+        self.managedSession = managedSession
+        try reconcileAssertions(now: Date(), powerSource: powerSource)
+    }
+
     func stopManagedSession() {
         guard var managedSession else {
             return

@@ -6,6 +6,7 @@ enum SessionSmokeCheck {
     @MainActor
     static func main() throws {
         try verifiesManagedSessionLifecycle()
+        try verifiesManagedSessionFlagUpdates()
         try verifiesBatteryGuardrail()
         try verifiesBatterySuspension()
         try verifiesSessionExpiry()
@@ -60,6 +61,37 @@ enum SessionSmokeCheck {
 
         try expect(!controller.hasManagedSession, "Battery guardrail should not leave a managed session behind.")
         try expect(backend.createdTypes.isEmpty, "Battery guardrail should not create assertions.")
+    }
+
+    @MainActor
+    private static func verifiesManagedSessionFlagUpdates() throws {
+        let backend = FakeAssertionBackend()
+        let controller = CaffeinateSessionController(
+            assertionCreate: backend.create,
+            assertionRelease: backend.release
+        )
+
+        try controller.startManagedSession(duration: nil, flags: [.idle], powerSource: .ac)
+        let initialIdleAssertionID = try require(controller.managedSession?.assertionIDs[.idle], "Missing idle assertion.")
+
+        try controller.updateManagedSessionFlags([.display, .idle], powerSource: .ac)
+
+        try expect(
+            Set(controller.managedSession?.assertionIDs.keys.map { $0 } ?? []) == Set([.idle, .display]),
+            "Live flag updates should apply new assertions immediately."
+        )
+        try expect(
+            controller.managedSession?.assertionIDs[.idle] == initialIdleAssertionID,
+            "Unchanged assertions should not be recreated during live updates."
+        )
+
+        try controller.updateManagedSessionFlags([.display], powerSource: .ac)
+
+        try expect(
+            Set(controller.managedSession?.assertionIDs.keys.map { $0 } ?? []) == Set([.display]),
+            "Live flag updates should release removed assertions immediately."
+        )
+        try expect(backend.releasedIDs.contains(initialIdleAssertionID), "Removed assertions should be released.")
     }
 
     @MainActor
