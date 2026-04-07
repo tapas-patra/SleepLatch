@@ -3,15 +3,10 @@ import Foundation
 
 final class CaffeinateInspector {
     func runningProcesses(excluding excludedPIDs: Set<Int32> = []) -> [ExternalCaffeinateProcess] {
-        let output = shellOutput(
-            executable: "/bin/ps",
-            arguments: ["-axo", "pid=,etime=,comm=,command="]
-        )
-
-        return output
-            .split(separator: "\n")
-            .compactMap { parseProcessLine(String($0)) }
-            .filter { !excludedPIDs.contains($0.pid) }
+        listAllPIDs()
+            .filter { $0 > 0 }
+            .filter { !excludedPIDs.contains($0) }
+            .compactMap(processInfo(for:))
             .sorted { $0.pid < $1.pid }
     }
 
@@ -20,64 +15,106 @@ final class CaffeinateInspector {
         kill(pid, SIGTERM) == 0
     }
 
-    private func parseProcessLine(_ line: String) -> ExternalCaffeinateProcess? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else {
+    private func processInfo(for pid: Int32) -> ExternalCaffeinateProcess? {
+        guard let bsdInfo = bsdInfo(for: pid) else {
             return nil
         }
 
-        let components = trimmed.split(maxSplits: 3, whereSeparator: \.isWhitespace)
-        guard components.count == 4,
-              let pid = Int32(components[0]) else {
-            return nil
-        }
+        let executablePath = pidPath(for: pid)
+        let executableName = URL(fileURLWithPath: executablePath).lastPathComponent
+        let processName = string(from: bsdInfo.pbi_name)
+        let commandName = string(from: bsdInfo.pbi_comm)
 
-        let commandLine = String(components[3])
-        let launchedExecutable = commandLine
-            .split(whereSeparator: \.isWhitespace)
-            .first
-            .map(String.init)
-            .map { URL(fileURLWithPath: $0).lastPathComponent }
-
-        let commName = URL(fileURLWithPath: String(components[2])).lastPathComponent
-        let isCaffeinateProcess = launchedExecutable == "caffeinate"
-            || commandLine == "caffeinate"
-            || commName == "caffeinate"
-            || commandLine.contains("/caffeinate ")
-            || commandLine.hasSuffix("/caffeinate")
+        let isCaffeinateProcess = executableName == "caffeinate"
+            || processName == "caffeinate"
+            || commandName == "caffeinate"
 
         guard isCaffeinateProcess else {
             return nil
         }
 
+        let command = executablePath.isEmpty ? (processName.isEmpty ? commandName : processName) : executablePath
+        let startTime = TimeInterval(bsdInfo.pbi_start_tvsec) + (TimeInterval(bsdInfo.pbi_start_tvusec) / 1_000_000)
+
         return ExternalCaffeinateProcess(
             pid: pid,
-            elapsed: String(components[1]),
-            command: commandLine
+            elapsed: elapsedLabel(since: startTime),
+            command: command
         )
     }
 
-    private func shellOutput(executable: String, arguments: [String]) -> String {
-        let process = Process()
-        let outputPipe = Pipe()
+    private func listAllPIDs() -> [Int32] {
+        let estimatedCount = max(proc_listallpids(nil, 0), 256)
+        let bufferSize = Int(estimatedCount) * MemoryLayout<Int32>.stride
+        let buffer = UnsafeMutablePointer<Int32>.allocate(capacity: Int(estimatedCount))
+        defer { buffer.deallocate() }
 
-        process.executableURL = URL(fileURLWithPath: executable)
-        process.arguments = arguments
-        process.standardOutput = outputPipe
-        process.standardError = Pipe()
+        let actualCount = proc_listallpids(buffer, Int32(bufferSize))
+        guard actualCount > 0 else {
+            return []
+        }
 
-        do {
-            try process.run()
-            process.waitUntilExit()
-        } catch {
+        return Array(UnsafeBufferPointer(start: buffer, count: Int(actualCount)))
+    }
+
+    private func bsdInfo(for pid: Int32) -> proc_bsdinfo? {
+        var info = proc_bsdinfo()
+        let result = proc_pidinfo(
+            pid,
+            PROC_PIDTBSDINFO,
+            0,
+            &info,
+            Int32(MemoryLayout<proc_bsdinfo>.size)
+        )
+        guard result == Int32(MemoryLayout<proc_bsdinfo>.size) else {
+            return nil
+        }
+
+        return info
+    }
+
+    private func pidPath(for pid: Int32) -> String {
+        let bufferSize = Int(4 * MAXPATHLEN)
+        let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+
+        let result = proc_pidpath(pid, buffer, UInt32(bufferSize))
+        guard result > 0 else {
             return ""
         }
 
-        guard process.terminationStatus == 0 else {
-            return ""
+        return String(cString: buffer)
+    }
+
+    private func elapsedLabel(since startTime: TimeInterval) -> String {
+        let elapsed = max(Int(Date().timeIntervalSince1970 - startTime), 0)
+        let days = elapsed / 86_400
+        let hours = (elapsed % 86_400) / 3_600
+        let minutes = (elapsed % 3_600) / 60
+        let seconds = elapsed % 60
+
+        if days > 0 {
+            return "\(days)d \(hours)h"
         }
 
-        let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        return String(decoding: data, as: UTF8.self)
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+
+        if minutes > 0 {
+            return "\(minutes)m \(seconds)s"
+        }
+
+        return "\(seconds)s"
+    }
+
+    private func string<T>(from value: T) -> String {
+        withUnsafeBytes(of: value) { buffer in
+            guard let baseAddress = buffer.baseAddress?.assumingMemoryBound(to: CChar.self) else {
+                return ""
+            }
+
+            return String(cString: baseAddress)
+        }
     }
 }
