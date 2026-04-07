@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SleepLatch</title>
+  <meta name="description" content="A lightweight macOS utility for controlling caffeinate without leaving forgotten sleep blockers behind.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">macOS utility</p>
+        <h1>Keep your Mac awake on purpose, not by accident.</h1>
+        <p class="lede">
+          SleepLatch is a lightweight menu bar app for timed keep-awake sessions,
+          safer untimed sessions, and cleanup of stray <code>caffeinate</code> processes.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="./downloads/SleepLatch.zip">Download SleepLatch</a>
+          <a class="button button-secondary" href="https://github.com/tapas-patra/SleepLatch">View Source</a>
+        </div>
+        <p class="meta">Download: zipped macOS app bundle (.zip) | Install by unzipping and moving <code>SleepLatch.app</code> to Applications.</p>
+      </div>
+      <div class="hero-card">
+        <div class="card-topline">What it solves</div>
+        <ul class="hero-list">
+          <li>Timed keep-awake presets for 15m, 30m, and 1h</li>
+          <li>Live flag controls for idle, display, disk, and AC-only system sleep</li>
+          <li>Direct visibility into external <code>caffeinate</code> sessions</li>
+          <li>App-owned power assertions, so managed sessions do not outlive the app</li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="content-grid">
+      <section class="panel">
+        <h2>How it works</h2>
+        <p>
+          SleepLatch uses native macOS power assertions for the sessions it manages.
+          That means quitting or force-quitting the app clears the managed sleep blockers,
+          which is the failure mode the plain <code>caffeinate</code> command leaves behind.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Install</h2>
+        <ol class="steps">
+          <li>Download <a href="./downloads/SleepLatch.zip">SleepLatch.zip</a>.</li>
+          <li>Unzip the archive.</li>
+          <li>Move <code>SleepLatch.app</code> into Applications.</li>
+          <li>Open the app and use the control window or the menu bar icon.</li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <h2>What you get</h2>
+        <div class="feature-list">
+          <article>
+            <h3>Timed presets</h3>
+            <p>Start a short session when the network drops during sleep, without forgetting to stop it later.</p>
+          </article>
+          <article>
+            <h3>Safer untimed mode</h3>
+            <p>Untimed sessions require confirmation so you do not casually leave the Mac awake for hours.</p>
+          </article>
+          <article>
+            <h3>External cleanup</h3>
+            <p>Inspect manually launched <code>caffeinate</code> processes and stop them without guessing PIDs.</p>
+          </article>
+          <article>
+            <h3>Minimal footprint</h3>
+            <p>Small native app, no background service, no bloated dashboard, no login required.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Open source</h2>
+        <p>
+          SleepLatch is developed in the open. If you want to build it yourself,
+          inspect the code, or track updates, use the GitHub repository below.
+        </p>
+        <p><a href="https://github.com/tapas-patra/SleepLatch">github.com/tapas-patra/SleepLatch</a></p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -31,6 +31,33 @@ That creates:
 ./dist/SleepLatch.app
 ```
 
+The same packaging step also creates:
+
+```text
+./dist/SleepLatch.zip
+```
+
+## Prepare GitHub Pages Download
+
+To publish a downloadable build from GitHub Pages without tracking the raw `dist/` folder in git:
+
+```bash
+zsh ./scripts/prepare-github-pages.sh
+```
+
+That updates:
+
+```text
+./docs/downloads/SleepLatch.zip
+./docs/downloads/SHA256SUMS.txt
+```
+
+Then enable GitHub Pages in your repository settings and choose:
+
+- Source: `Deploy from a branch`
+- Branch: `main`
+- Folder: `/docs`
+
 ## Build
 
 ```bash

@@ -2,6 +2,8 @@
 /.build
 /dist
 /Packages
+AppResources/SleepLatch.icns
+AppResources/SleepLatch.iconset/
 xcuserdata/
 DerivedData/
 .swiftpm/configuration/registries.json

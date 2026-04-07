@@ -8,6 +8,8 @@
     <string>SleepLatch</string>
     <key>CFBundleIdentifier</key>
     <string>com.tapaskumarpatra.sleeplatch</string>
+    <key>CFBundleIconFile</key>
+    <string>SleepLatch</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
