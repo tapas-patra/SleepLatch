@@ -4,6 +4,10 @@ struct ControlPanelView: View {
     @ObservedObject var model: SleepLatchModel
     let onQuit: () -> Void
     @State private var pendingConfirmation: PendingConfirmation?
+    @State private var customHours = "2"
+    @State private var customMinutes = "00"
+
+    private static let presetDurations: [TimeInterval] = [15 * 60, 30 * 60, 60 * 60]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -62,6 +66,33 @@ struct ControlPanelView: View {
                     pendingConfirmation = .indefiniteSession
                 }
                 .modifier(PresetButtonModifier(isActive: model.isPresetActive(duration: nil)))
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Custom Timer")
+                    .font(.subheadline.weight(.medium))
+
+                HStack(spacing: 8) {
+                    customTimerField("HH", text: $customHours, width: 58)
+                        .onChange(of: customHours) { customHours = sanitizeHours($0) }
+
+                    Text(":")
+                        .font(.system(.headline, design: .monospaced))
+                        .foregroundStyle(.secondary)
+
+                    customTimerField("MM", text: $customMinutes, width: 58)
+                        .onChange(of: customMinutes) { customMinutes = sanitizeMinutes($0) }
+
+                    Button("Start Custom") {
+                        startCustomSession()
+                    }
+                    .modifier(PresetButtonModifier(isActive: isCustomDurationActive))
+                    .disabled(customDuration == nil)
+                }
+
+                Text(customDurationHelpText)
+                    .font(.caption)
+                    .foregroundStyle(customDuration == nil ? .red : .secondary)
             }
         }
     }
@@ -159,6 +190,68 @@ struct ControlPanelView: View {
             model.startSession(duration: duration)
         }
         .modifier(PresetButtonModifier(isActive: model.isPresetActive(duration: duration)))
+    }
+
+    private func customTimerField(_ placeholder: String, text: Binding<String>, width: CGFloat) -> some View {
+        TextField(placeholder, text: text)
+            .textFieldStyle(.roundedBorder)
+            .frame(width: width)
+            .multilineTextAlignment(.center)
+            .font(.system(.body, design: .monospaced))
+    }
+
+    private var customDuration: TimeInterval? {
+        let hours = Int(customHours.isEmpty ? "0" : customHours) ?? 0
+        let minutes = Int(customMinutes.isEmpty ? "0" : customMinutes) ?? 0
+        let totalMinutes = (hours * 60) + minutes
+
+        guard totalMinutes > 0 else {
+            return nil
+        }
+
+        return TimeInterval(totalMinutes * 60)
+    }
+
+    private var isCustomDurationActive: Bool {
+        guard let customDuration else {
+            return false
+        }
+
+        guard !Self.presetDurations.contains(where: { abs($0 - customDuration) < 1 }) else {
+            return false
+        }
+
+        return model.isPresetActive(duration: customDuration)
+    }
+
+    private var customDurationHelpText: String {
+        guard let customDuration else {
+            return "Enter at least 1 minute. Use HH:MM for longer sessions."
+        }
+
+        return "Custom session: \(DurationFormatter.compactLabel(for: customDuration))"
+    }
+
+    private func startCustomSession() {
+        guard let customDuration else {
+            return
+        }
+
+        model.startSession(duration: customDuration)
+    }
+
+    private func sanitizeHours(_ input: String) -> String {
+        String(input.filter(\.isNumber).prefix(3))
+    }
+
+    private func sanitizeMinutes(_ input: String) -> String {
+        let digits = String(input.filter(\.isNumber).prefix(2))
+
+        guard let minutes = Int(digits), minutes > 59 else {
+            return digits
+        }
+
+        return "59"
     }
 
     private func confirmationBlock(for pendingConfirmation: PendingConfirmation) -> some View {

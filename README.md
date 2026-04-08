@@ -4,7 +4,7 @@ SleepLatch is a lightweight macOS utility for controlling `caffeinate` without l
 
 Current MVP:
 
-- Start a managed keep-awake session for `15m`, `30m`, `1h`, or until stopped
+- Start a managed keep-awake session for `15m`, `30m`, `1h`, a custom `HH:MM` duration, or until stopped
 - Toggle the core `caffeinate` flags before starting a session
 - Show current managed state in the menu bar
 - Stop the managed session immediately

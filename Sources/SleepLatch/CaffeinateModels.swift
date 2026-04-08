@@ -136,7 +136,9 @@ enum DurationFormatter {
     static func buttonLabel(for remaining: TimeInterval) -> String {
         let clamped = max(Int(remaining.rounded(.down)), 0)
         if clamped >= 3600 {
-            return "\(clamped / 3600)h"
+            let hours = clamped / 3600
+            let minutes = (clamped % 3600) / 60
+            return minutes == 0 ? "\(hours)h" : "\(hours)h\(minutes)m"
         }
 
         if clamped >= 60 {

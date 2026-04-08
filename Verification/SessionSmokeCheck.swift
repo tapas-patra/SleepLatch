@@ -138,7 +138,8 @@ enum SessionSmokeCheck {
     private static func verifiesDurationFormatting() throws {
         try expect(DurationFormatter.compactLabel(for: 3660) == "1h 1m", "Hour formatting regressed.")
         try expect(DurationFormatter.compactLabel(for: 125) == "2m 5s", "Minute formatting regressed.")
-        try expect(DurationFormatter.buttonLabel(for: 3660) == "1h", "Hour button formatting regressed.")
+        try expect(DurationFormatter.buttonLabel(for: 3660) == "1h1m", "Hour button formatting regressed.")
+        try expect(DurationFormatter.buttonLabel(for: 5400) == "1h30m", "Custom hour button formatting regressed.")
         try expect(DurationFormatter.buttonLabel(for: 125) == "2m", "Minute button formatting regressed.")
     }
 
