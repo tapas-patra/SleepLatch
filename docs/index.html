@@ -119,12 +119,31 @@
           <a class="button button-primary" href="./downloads/SleepLatch.zip">Download SleepLatch.zip</a>
           <a class="text-link" href="./downloads/SHA256SUMS.txt">View SHA-256 checksum</a>
         </div>
+        <div class="warning-note">
+          <strong>Heads up:</strong> the current downloadable build is not Apple-notarized, so macOS may show
+          a verification warning the first time you open it.
+        </div>
         <ol class="steps">
           <li>Download <a href="./downloads/SleepLatch.zip">SleepLatch.zip</a>.</li>
           <li>Unzip the archive.</li>
           <li>Move <code>SleepLatch.app</code> to Applications.</li>
           <li>Open it and use the control window or menu bar icon.</li>
         </ol>
+      </section>
+
+      <section class="panel">
+        <p class="section-kicker">First Launch On macOS</p>
+        <h2>If macOS says “SleepLatch” cannot be verified.</h2>
+        <ol class="steps">
+          <li>Move <code>SleepLatch.app</code> to Applications before opening it.</li>
+          <li>In Finder, Control-click or right-click <code>SleepLatch.app</code>, then choose <strong>Open</strong>.</li>
+          <li>When macOS shows the warning, click <strong>Open</strong> from that dialog.</li>
+          <li>If you already clicked the normal open path and got blocked, go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Open Anyway</strong> for SleepLatch.</li>
+        </ol>
+        <p>
+          This is a Gatekeeper warning for apps downloaded from the web that are not notarized by Apple.
+          Once you approve the app, later launches should work normally on that Mac.
+        </p>
       </section>
 
       <section class="panel">
